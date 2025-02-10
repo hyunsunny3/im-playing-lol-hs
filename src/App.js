@@ -1,41 +1,35 @@
-// App.js (메인 컴포넌트)
-import { useState } from "react";
-import { getSummonerInfo } from "./api/riotApi";
-import SearchBar from "./components/SearchBar";
+// React 컴포넌트에서 Netlify Functions 호출 예시
+import { useState } from 'react';
+import axios from 'axios';
 
-function App() {
-  const [summoner, setSummoner] = useState(null); // 🔹 소환사 정보 저장
-  const [error, setError] = useState("");
+const SearchBar = ({ onSearch }) => {
+  const [summonerName, setSummonerName] = useState('');
 
-  const handleSearch = async (summonerName) => {
-    setError("");
-    setSummoner(null);
-
-    const data = await getSummonerInfo(summonerName);
-    if (!data) {
-      setError("소환사 정보를 찾을 수 없습니다.");
-      return;
+  const handleSearch = async () => {
+    if (summonerName.trim()) {
+      try {
+        // Netlify Function으로 요청 보내기
+        const response = await axios.get(
+          `/api/getSummonerInfo?summonerName=${summonerName}`
+        );
+        onSearch(response.data);  // 데이터 처리 함수 호출
+      } catch (error) {
+        console.error("소환사 정보를 가져오는 중 오류 발생", error);
+      }
     }
-
-    setSummoner(data); // 🔹 소환사 정보 업데이트
   };
 
   return (
     <div>
-      <h1>LoL 실시간 게임 조회</h1>
-      <SearchBar onSearch={handleSearch} />
-
-      {error && <p>{error}</p>}
-
-      {summoner && (
-        <div>
-          <h2>{summoner.name} (LV {summoner.summonerLevel})</h2>
-          <p>소환사 ID: {summoner.id}</p>
-          <p>계정 ID: {summoner.accountId}</p>
-        </div>
-      )}
+      <input
+        type="text"
+        placeholder="소환사명 입력"
+        value={summonerName}
+        onChange={(e) => setSummonerName(e.target.value)}
+      />
+      <button onClick={handleSearch}>검색</button>
     </div>
   );
-}
+};
 
-export default App;
+export default SearchBar;
